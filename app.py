@@ -7,10 +7,12 @@ app = Flask(__name__)
 def home():
     return jsonify(status="ok"), 200
 
-@app.post("/transcript/<id>")
-def transcript(id):
-    transcript = Transcript(video_id=id, language="pt")
+@app.post("/transcript/<id>/<lng>")
+def transcript(id, lng):
+    transcript = Transcript(video_id=id, language= lng or "pt")
     transcript.fetch_transcription()
+
+    print("T:", transcript.list_transcripts)
 
     if not len(transcript.segments):
          return jsonify(error="Transcript not found"), 404

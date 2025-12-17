@@ -3,6 +3,7 @@ import json
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
 from .thumb import Thumb
 
+
 class Transcript:
     def __init__(self, video_id, language):
         self._video_id = video_id
@@ -38,6 +39,20 @@ class Transcript:
     @property
     def segments(self):
         return self._segments
+    
+    @property
+    def list_transcripts(self): 
+        if not self._video_id:
+            return 0
+        
+        try:
+            yt = YouTubeTranscriptApi()
+            t_list = yt.list(self._video_id)
+            t_available = t_list.find_transcript(["pt", "en"])
+            return len(t_available.translation_languages)
+        except Exception as e:
+            print(f"Erro ao listar: {e}")
+            return 0
 
     def to_json(self):
         if not self._segments:
