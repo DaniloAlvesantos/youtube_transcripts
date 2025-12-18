@@ -5,9 +5,9 @@ from .thumb import Thumb
 
 
 class Transcript:
-    def __init__(self, video_id, language):
+    def __init__(self, video_id):
         self._video_id = video_id
-        self._language = language
+        self._language = None
         self._segments = []
         self._thumb = None
     
@@ -16,7 +16,13 @@ class Transcript:
 
         try: 
             yt = YouTubeTranscriptApi()
-            yt_response = yt.fetch(self._video_id, languages=[self._language])
+            self._language = self.list_transcripts(yt=yt)
+            print("lang:20", self._language)
+
+            if not self._language:
+                raise NoTranscriptFound("No generated transcript available")
+
+            yt_response = yt.fetch(self._video_id, languages=[self._language["lan"]])
 
             for chunk in yt_response:
                 self._segments.append({
@@ -40,19 +46,37 @@ class Transcript:
     def segments(self):
         return self._segments
     
-    @property
-    def list_transcripts(self): 
+    def list_transcripts(self, yt: YouTubeTranscriptApi):
         if not self._video_id:
-            return 0
-        
+            return {}
+
         try:
-            yt = YouTubeTranscriptApi()
             t_list = yt.list(self._video_id)
-            t_available = t_list.find_transcript(["pt", "en"])
-            return len(t_available.translation_languages)
+            t_available = None
+
+            for t in t_list:
+                if t.is_generated:
+                    t_available = {
+                        "lan": t.language_code,
+                        "translation_lan": [
+                            tl.language_code for tl in t.translation_languages
+                        ]
+                    }
+
+                print(
+                    t.video_id,
+                    t.language,
+                    t.language_code,
+                    t.is_generated,
+                    t.translation_languages
+                )
+
+            return t_available
+
         except Exception as e:
             print(f"Erro ao listar: {e}")
-            return 0
+            return {}
+
 
     def to_json(self):
         if not self._segments:
