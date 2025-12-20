@@ -1,6 +1,11 @@
 import requests
 
 class Thumb:
+    """
+    EXTRACT THUMBNAILS FROM 
+    YOUTUBE VIDEOS
+    """
+    
     _api_url = "https://img.youtube.com/vi"
     def __init__(self, video_id):
         self._video_id = video_id

@@ -2,6 +2,9 @@ from pymongo import MongoClient
 from bson import ObjectId
 
 class DB:
+    """
+    MONGODB MANAGER CLASS
+    """
     _uri = "mongodb://localhost:27017"
     def __init__(self):
         self._client = MongoClient(self._uri)

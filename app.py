@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, render_template, request
 from models.transcript import Transcript
 from models.db import DB
+from models.yt import YT
 
 app = Flask(__name__)
 
@@ -84,3 +85,16 @@ def create_transcript_json(video_id):
 
     tr.save_to_file(path="./")
     return jsonify(id=video_id, status="created"), 201
+
+# @app.post("/transcript/<v")
+
+@app.get("/video/<video_id>")
+def download_video(video_id):
+    yt = YT(video_id)
+    tr = Transcript(video_id)
+    tr._language = tr._select_language(yt)
+    tr._segments = yt.transcript
+
+    data = tr.save()
+
+    return jsonify(status="OK", data = yt.transcript), 200

@@ -14,6 +14,10 @@ from .db import DB
 
 
 class Transcript:
+    """
+    GET OR CREATE TRANSCRIPTS
+    FROM YOUTUBE VIDEOS
+    """
     def __init__(self, video_id: str):
         if not video_id:
             raise ValueError("video_id is required")
@@ -150,6 +154,22 @@ class Transcript:
 
         return None
     
+    def from_generated(self, segments):
+        try:
+            yt = YouTubeTranscriptApi()
+            self._language = self._select_language(yt)
+
+            if not self._language:
+                raise NoTranscriptFound("No generated transcript available")
+        
+            self.segments = segments
+
+            return self.to_dict()
+
+        except Exception as e:
+            print(f"Error: {e}")
+
+
     def __str__(self) -> str:
         return (
             f"Transcript("
