@@ -1,0 +1,86 @@
+{% extends "base.html" %} {% block content%}
+<main class="w-full flex flex-col items-center justify-center">
+  <div class="flex items-center gap-2">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+      version="1.1"
+      x="0px"
+      y="0px"
+      width="24px"
+      height="24px"
+      viewBox="0 0 24 24"
+      enable-background="new 0 0 24 24"
+      xml:space="preserve"
+      focusable="false"
+      aria-hidden="true"
+      class="h-auto w-12"
+    >
+      <g>
+        <path
+          fill="#FF0033"
+          d="M21.58,7.19c-0.23-0.86-0.91-1.54-1.77-1.77C18.25,5,12,5,12,5S5.75,5,4.19,5.42   C3.33,5.65,2.65,6.33,2.42,7.19C2,8.75,2,12,2,12s0,3.25,0.42,4.81c0.23,0.86,0.91,1.54,1.77,1.77C5.75,19,12,19,12,19   s6.25,0,7.81-0.42c0.86-0.23,1.54-0.91,1.77-1.77C22,15.25,22,12,22,12S22,8.75,21.58,7.19z"
+        ></path>
+        <polygon fill="#FFFFFF" points="10,15 15,12 10,9  "></polygon>
+      </g>
+    </svg>
+    <h1><span class="text-rose-500">Youtube</span> Transcript</h1>
+  </div>
+  <p>Get youtube transcripts or transcript it</p>
+  <hr class="text-zinc-100 w-full my-2" />
+  <form
+    class="w-11/12 flex flex-col items-center justify-center gap-4"
+    id="url-form"
+  >
+    <div class="gap-2 w-full">
+      <label for="" class="uppercase text-lg">Url</label>
+      <input
+        type="url"
+        class="border-2 border-zinc-400 rounded-md w-full p-1 outline-none"
+        placeholder="https://youtube.com/..."
+        id="inputUrl"
+      />
+    </div>
+
+    <button
+      type="submit"
+      id="submitButton"
+      disabled
+      class="bg-rose-500 hover:bg-rose-400 transition-colors duration-300 cursor-pointer rounded-md p-2 w-full md:w-1/2 disabled:bg-rose-300 disabled:cursor-not-allowed"
+    >
+      Transcript
+    </button>
+  </form>
+</main>
+{% endblock %} {% block scripts %}
+<script>
+  const form = document.querySelector("#url-form");
+  const button = document.querySelector("#submitButton");
+  const input = document.querySelector("#inputUrl");
+
+  const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+
+  const validateUrl = () => {
+    const url = input.value.trim();
+    if (youtubeRegex.test(url)) {
+      button.disabled = false;
+      input.classList.remove("border-red-500");
+      input.classList.add("border-green-500");
+    } else {
+      button.disabled = true;
+      input.classList.remove("border-green-500");
+      if (url.length > 0) {
+        input.classList.add("border-red-500");
+      }
+    }
+  };
+
+  input.addEventListener("input", validateUrl);
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const url = input.value;
+    console.log("Processing URL:", url);
+  });
+</script>
+{% endblock %}
