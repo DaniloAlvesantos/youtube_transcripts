@@ -1,7 +1,6 @@
 from yt_dlp import YoutubeDL
 from faster_whisper import WhisperModel
 from dtos.transcript_dtos import Transcript_DTOS
-import threading
 import os
 
 yt_opts = {
@@ -12,9 +11,8 @@ yt_opts = {
             "preferredcodec": "wav",
         }
     ],
-    "outtmpl": "%(title)s.%(ext)s",
     "quiet": True,
-    "restrictfilenames": False, 
+    "restrictfilenames": True, 
 }
 
 class YT:
@@ -22,29 +20,49 @@ class YT:
     _model = WhisperModel("small", device="cpu", compute_type="int8")
 
     def __init__(self, video_id: str):
+        self._video_id = video_id
         self._url = f"{self._default_url}{video_id}"
+        self._detected_language = None
+        self._transcript = []
+        self._process()
 
-        with YoutubeDL(yt_opts) as ydl:
-            info = ydl.extract_info(self._url, download=True)
+    def _process(self):
+        current_opts = yt_opts.copy()
+        current_opts["outtmpl"] = f"{self._video_id}.%(ext)s"
 
-            self._file_path = info["requested_downloads"][0]["filepath"]
+        try:
+            with YoutubeDL(current_opts) as ydl:
+                info = ydl.extract_info(self._url, download=True)
+                file_path = info["requested_downloads"][0]["filepath"]
 
-        segments, _ = self._model.transcribe(
-            self._file_path,
-            vad_filter=True
-        )
+            segments, info = self._model.transcribe(
+                file_path,
+                vad_filter=True
+            )
 
-        transcript = []
+            self._detected_language = info.language
+            
+            formatted_transcript = []
+            for s in segments:
+                d = Transcript_DTOS(s.start, s.end, s.text)
+                formatted_transcript.append(d.toDict)
 
-        for s in segments:
-            d = Transcript_DTOS(s.start, s.end, s.text)
+            self._transcript = formatted_transcript
 
-            transcript.append(d.toDict)
-
-        os.remove(self._file_path)
-
-        self._transcript = transcript
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                
+        except Exception as e:
+            raise e
 
     @property
     def transcript(self):
         return self._transcript
+
+    @property
+    def detected_language(self):
+        return self._detected_language
+
+    @property
+    def video_id(self):
+        return self._video_id

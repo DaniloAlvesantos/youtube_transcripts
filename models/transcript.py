@@ -60,7 +60,6 @@ class Transcript:
             ]
 
         except (TranscriptsDisabled, NoTranscriptFound, VideoUnavailable) as e:
-            # Intentionally silent for API stability
             print(f"[Transcript] Fetch error: {e}")
 
     @property
@@ -79,11 +78,13 @@ class Transcript:
         if not self._segments:
             raise ValueError("Transcript not fetched or empty")
 
-        if self._exists_in_db():
-            return None
-
-        db = DB()
-        return db.get_collection("transcripts").insert_one(self.to_dict())
+        db = DB().get_collection("transcripts")
+    
+        return db.update_one(
+            {"video_id": self._video_id},
+            {"$set": self.to_dict()},
+            upsert=True
+        )
 
     def save_to_file(self, path: str):
         if not self._segments:
@@ -99,12 +100,28 @@ class Transcript:
 
     def to_dict(self) -> Dict:
         thumb_url = self._thumb or Thumb(self._video_id).extract_thumb()
+    
+        formatted_segments = []
+        for s in self._segments:
+            start = s.get("start", 0)
+            end = s.get("end") or (start + s.get("duration", 0))
+        
+            lang_code = self._language.get("lan") if self._language else "unknown"
+
+            formatted_segments.append({
+                "start": start,
+                "end": end,
+                "text": {
+                    lang_code: s.get("text", "")
+                }
+            })
 
         return {
-            "video_id": self._video_id,
-            "language": self._language,
+         "video_id": self._video_id,
+            "languages": [lang_code],
             "thumb": thumb_url or "",
-            "segments": self._segments,
+            "segments": formatted_segments,
+            "status": "completed"
         }
 
     def _load_from_db(self) -> bool:
@@ -168,7 +185,6 @@ class Transcript:
 
         except Exception as e:
             print(f"Error: {e}")
-
 
     def __str__(self) -> str:
         return (
