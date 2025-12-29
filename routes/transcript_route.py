@@ -1,8 +1,11 @@
 from flask import Blueprint, jsonify, request
 from models.transcript import Transcript
 from models.db import DB
+from workers.translate import translate_worker
+from concurrent.futures import ThreadPoolExecutor
 
 transcript_bp = Blueprint("transcript", __name__, url_prefix="/transcript")
+executor = ThreadPoolExecutor(max_workers=3)
 
 @transcript_bp.get("/all")
 def get_all_transcripts():
@@ -74,4 +77,26 @@ def create_transcript_json(video_id):
         return jsonify(error="Transcript not found"), 404
 
     tr.save_to_file(path="./")
-    return jsonify(id=video_id, status="created"), 201
+    return jsonify(id=video_id, status="created"), 
+
+@transcript_bp.get("/translate/<video_id>/<target_lang>")
+def translate_transcript(video_id, target_lang="en"):
+    db = DB().get_collection("transcripts")
+    doc = db.find_one({"video_id": video_id})
+
+    if not doc:
+        return jsonify(status="Error", message="Transcript not found!"), 404
+    
+    available_langs = doc.get("languages", [])
+    if target_lang in available_langs:
+        return jsonify(status="OK", message="Already translated", data=doc.get("segments")), 200
+
+    db.update_one({"video_id": video_id}, {"$set": {"status": "translating"}})
+    
+    executor.submit(translate_worker, video_id, target_lang)
+
+    return jsonify(
+        status="PROCESSING", 
+        message=f"Translation to {target_lang} started.", 
+        video_id=video_id
+    ), 202
