@@ -57,4 +57,5 @@ def translate_worker(video_id, target_lang="en"):
         for s in segments:
             s["text"][target_lang] = "[Translation Error]"
 
+    print(f"Translating video {video_id} has done")
     return segments
