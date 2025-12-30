@@ -1,7 +1,7 @@
 from yt_dlp import YoutubeDL
 from faster_whisper import WhisperModel
 from dtos.transcript_dtos import Transcript_DTOS
-from models.db import DB
+from .db import DB
 import os
 
 yt_opts = {
