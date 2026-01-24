@@ -1,15 +1,100 @@
 version: "3.9"
 
 services:
+  redis:
+    image: redis:latest
+    container_name: youtube-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - REDIS_MAXMEMORY=128mb
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+  redis_commander:
+    image: rediscommander/redis-commander:latest
+    container_name: youtube-redis-commander
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:youtube-redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    profiles:
+      - tools
   mongodb:
     image: mongo:7
     container_name: youtube-mongodb
+    restart: always
     ports:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
     environment:
       MONGO_INITDB_DATABASE: youtube
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 })"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: youtube-api
+    restart: always
+    ports:
+      - "5001:5000"
+    volumes:
+      - .:/app
+    command: ["gunicorn", "--workers", "1", "--reload", "--bind", "0.0.0.0:5000", "--timeout", "600", "app:app"]
+    deploy:
+      resources:
+        limits:
+          memory: 4G 
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/youtube
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      # Updated to use the health route seen in your app.py screenshot
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health/db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  gateway:
+    image: openresty/openresty:alpine
+    container_name: youtube-gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./gateway/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      - ./gateway/lua:/usr/local/openresty/lua:ro
+      - ./gateway/tmp/cache:/usr/local/openresty/cache
+      - ./gateway/logs:/usr/local/openresty/nginx/logs
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   mongo_data:
+  redis_data:
+    driver: local
+  gateway_data:

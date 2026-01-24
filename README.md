@@ -11,6 +11,9 @@
 - MongoDB
 - Docker
 - Ollama
+- NGINX
+    - OpenResty
+    - Lua
 
 ## Comands
 
