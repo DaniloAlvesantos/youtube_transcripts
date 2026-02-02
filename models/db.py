@@ -7,10 +7,10 @@ class DB:
     MONGODB MANAGER CLASS
     """
 
+    _uri = "mongodb://localhost:27017"
     def __init__(self):
-        uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/youtube")
-        self._client = MongoClient(uri)
-        self._db = self._client.get_database()
+        self._client = MongoClient(self._uri)
+        self._db = self._client.get_database("youtube")
 
     def get_collection(self, collection):
         return self._db.get_collection(collection)
