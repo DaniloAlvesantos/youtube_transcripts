@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from models.scrapeEBD import ScrapeEBD
 from models.db import DB
+from utils.logging_helper import error_logger
 
 def scrapeEBD_process(url):
     db = DB().get_collection("scrapes")
@@ -13,7 +14,7 @@ def scrapeEBD_process(url):
                 "$set": {
                     "status": "downloading",
                     "metadata.source_url": url,
-                    "metadata.ingested_at": datetime.now().isoformat() + "Z"
+                    "metadata.ingested_at": datetime.now(timezone.utc).isoformat() + "Z"
                 }
             }, 
             upsert=True
@@ -50,6 +51,6 @@ def scrapeEBD_process(url):
             }
         )
         
-        print(f"❌ Erro na URL {url}: {e}")
+        error_logger(f"❌ Erro na URL {url}: {e}")
         
         return None

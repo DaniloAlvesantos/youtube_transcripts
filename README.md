@@ -1,4 +1,5 @@
 # Youtube Transcript
+It's scrape tool
 
 ## Techs
 
@@ -11,9 +12,6 @@
 - MongoDB
 - Docker
 - Ollama
-- NGINX
-    - OpenResty
-    - Lua
 
 ## Comands
 

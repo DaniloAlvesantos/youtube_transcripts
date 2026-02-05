@@ -12,3 +12,5 @@ services:
 
 volumes:
   mongo_data:
+
+# docker exec -it christian-ai-db mongosh

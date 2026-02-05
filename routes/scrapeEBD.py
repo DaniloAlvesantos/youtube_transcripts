@@ -15,7 +15,8 @@ def scrape_ebd():
         return jsonify(error="URL is required"), 400
     
     db = DB()
-    data = db.get_collection("scrapes").find_one("metadata.source_url", url)
+    data = db.get_collection("scrapes").find_one({"metadata.source_url": url})
+    data["_id"] = str(data["_id"])
     
     if data:
         return jsonify(status="OK", data=data), 200
@@ -27,3 +28,17 @@ def scrape_ebd():
         message="Scraping started.", 
         url=url
     ), 202
+
+@scrapeEBD_bp.get("/ebd/all")
+def scrabeEBD_all():
+    db = DB()
+    raw_data = db.get_collection("scrapes").find()
+
+    data = []
+    for doc in raw_data:
+        doc["_id"] = str(doc["_id"])
+        data.append(doc)
+
+    return jsonify(
+        data=data
+    ), 200

@@ -56,6 +56,11 @@ def get_transcript_by_id(video_id):
 @transcript_bp.post("/<video_id>")
 def create_transcript(video_id):
     tr = Transcript(video_id=video_id)
+    data = tr.search_on_db()
+    if data:
+        data["_id"] = str(data["_id"])
+        return data
+    
     tr.fetch_transcription()
 
     if not tr.segments:

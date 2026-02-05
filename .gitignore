@@ -13,6 +13,5 @@ dist/
 build/
 *.egg-info/
 
-gateway/logs/*
-gateway/tmp/cache/*
 todo.md
+logs/*

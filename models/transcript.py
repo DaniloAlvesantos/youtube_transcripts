@@ -12,6 +12,8 @@ from youtube_transcript_api import (
 from .thumb import Thumb
 from .db import DB
 
+from utils.logging_helper import log_error, log_warn
+
 
 class Transcript:
     """
@@ -20,6 +22,7 @@ class Transcript:
     """
     def __init__(self, video_id: str):
         if not video_id:
+            log_error("video_id is required")
             raise ValueError("video_id is required")
 
         self._video_id: str = video_id
@@ -41,8 +44,10 @@ class Transcript:
         try:
             yt = YouTubeTranscriptApi()
             self._language = self._select_language(yt)
+            print(self._language)
 
             if not self._language:
+                log_warn("No generated transcript availabel")
                 raise NoTranscriptFound("No generated transcript available")
 
             yt_response = yt.fetch(
@@ -60,7 +65,7 @@ class Transcript:
             ]
 
         except (TranscriptsDisabled, NoTranscriptFound, VideoUnavailable) as e:
-            print(f"[Transcript] Fetch error: {e}")
+            log_error(f"[Transcript] Fetch error: {e}")
 
     @property
     def video_id(self) -> str:
@@ -76,6 +81,7 @@ class Transcript:
 
     def save(self):
         if not self._segments:
+            log_error("Transcript not fetched or empty")
             raise ValueError("Transcript not fetched or empty")
 
         db = DB().get_collection("transcripts")
@@ -86,8 +92,9 @@ class Transcript:
             upsert=True
         )
 
-    def save_to_file(self, path: str):
+    def save_to_file(self, path: str) -> str:
         if not self._segments:
+            log_error("Transcript not fetched or empty")
             raise ValueError("Transcript not fetched or empty")
 
         os.makedirs(path, exist_ok=True)
@@ -137,7 +144,6 @@ class Transcript:
         self._segments = data.get("segments", [])
         self._thumb = data.get("thumb")
 
-        print("[Transcript] Loaded from DB")
         return True
 
     def _exists_in_db(self) -> bool:
@@ -167,16 +173,17 @@ class Transcript:
                     }
 
         except Exception as e:
-            print(f"[Transcript] Language selection error: {e}")
+            log_error(f"[Transcript] Language selection error: {e}")
 
         return None
     
-    def from_generated(self, segments):
+    def from_generated(self, segments: str) -> (Dict | None):
         try:
             yt = YouTubeTranscriptApi()
             self._language = self._select_language(yt)
 
             if not self._language:
+                log_warn("No generated transcript available")
                 raise NoTranscriptFound("No generated transcript available")
         
             self.segments = segments
@@ -184,7 +191,7 @@ class Transcript:
             return self.to_dict()
 
         except Exception as e:
-            print(f"Error: {e}")
+            log_error(f"Error: {e}")
 
     def __str__(self) -> str:
         return (

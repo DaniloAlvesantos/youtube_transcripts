@@ -1,6 +1,7 @@
 from deep_translator import GoogleTranslator
 from models.transcript import Transcript
 from models.db import DB
+from utils.logging_helper import error_logger, log_debug
 
 def translate_worker(video_id, target_lang="en"):
     tr = Transcript(video_id)
@@ -13,7 +14,7 @@ def translate_worker(video_id, target_lang="en"):
     langs = data.get("languages") or data.get("language")
 
     if not langs:
-        print(f"Erro: Idioma original não encontrado para o vídeo {video_id}")
+        error_logger(f"Erro: Idioma original não encontrado para o vídeo {video_id}")
         return None
     
     if isinstance(langs, list):
@@ -53,9 +54,9 @@ def translate_worker(video_id, target_lang="en"):
             })
         
     except Exception as e:
-        print(f"Erro na tradução: {e}")
+        error_logger(f"Erro na tradução: {e}")
         for s in segments:
             s["text"][target_lang] = "[Translation Error]"
 
-    print(f"Translating video {video_id} has done")
+    log_debug(f"Translating video {video_id} has done")
     return segments

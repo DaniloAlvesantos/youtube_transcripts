@@ -1,6 +1,7 @@
 import requests
 import json
 import math
+from utils.logging_helper import log_error, log_debug
 
 class AI:
     _default_url = "http://localhost:11434/api"
@@ -22,7 +23,7 @@ class AI:
             response.raise_for_status()
             return response.json().get("response")
         except Exception as e:
-            print(f"Ollama Request Error: {e}")
+            log_error(f"Ollama Request Error: {e}")
             return None
 
     def summarize_preaching(self, segments, video_id, lang="en"):
@@ -37,13 +38,13 @@ class AI:
 
         all_points = []
 
-        print(f"\n🚀 Starting AI Analysis for {video_id}")
-        print(f"📦 Total words: {len(words)} | Chunks to process: {total_chunks}")
+        log_debug(f"\n🚀 Starting AI Analysis for {video_id}")
+        log_debug(f"📦 Total words: {len(words)} | Chunks to process: {total_chunks}")
 
         for i in range(total_chunks):
             current_chunk = i + 1
 
-            print(f"⏳ [Chunk {current_chunk}/{total_chunks}] Sending to Llama 3.2 3B...")
+            log_debug(f"⏳ [Chunk {current_chunk}/{total_chunks}] Sending to Llama 3.2 3B...")
             
             start = i * chunk_size
             end = start + chunk_size
@@ -79,9 +80,9 @@ class AI:
                 data = json.loads(result)
                 if "summary" in data:
                     all_points.extend(data["summary"])
-                    print(f"✅ [Chunk {current_chunk}/{total_chunks}] Success! Extracted {len(data['summary'])} points.")
+                    log_debug(f"✅ [Chunk {current_chunk}/{total_chunks}] Success! Extracted {len(data['summary'])} points.")
             except Exception as e:
-                print(f"❌ [Chunk {current_chunk}/{total_chunks}] Failed to parse JSON: {e}")
+                log_error(f"❌ [Chunk {current_chunk}/{total_chunks}] Failed to parse JSON: {e}")
 
         self._last_summary = {"summary": all_points}
         return self._last_summary

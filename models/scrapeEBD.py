@@ -1,15 +1,17 @@
 import requests
+from bs4 import Tag
 from io import BytesIO
 from bs4 import BeautifulSoup
 from docling.document_converter import DocumentConverter
 from docling.datamodel.base_models import DocumentStream
+from utils.logging_helper import log_error
 
 class ScrapeEBD:
-    def __init__(self, url):
-        self._url = url
-        self._converter = DocumentConverter()
+    def __init__(self, url: str):
+        self._url:str = url
+        self._converter: DocumentConverter = DocumentConverter()
 
-    def scrate_target_html(self, target_tag="article"):
+    def scrate_target_html(self, target_tag: str="article") -> (tuple[str, str, Tag, str] | None):
         try:
             response = requests.get(self._url)
             soup = BeautifulSoup(response.text, "html.parser")
@@ -17,7 +19,7 @@ class ScrapeEBD:
             title = soup.title.string or "-"
 
             if not target_element:
-                print(f"⚠️ Tag <{target_tag}> não encontrada.")
+                log_error(f"⚠️ Tag <{target_tag}> não encontrada.")
                 return None
 
             html_content = str(target_element).encode("utf-8")
@@ -41,10 +43,10 @@ class ScrapeEBD:
             return output, raw, target_element, title
 
         except Exception as e:
-            print(f"❌ Erro ao converter: {e}")
+            log_error(f"❌ Erro ao converter: {e}")
             
 
-    def clean_html(self, soup):
+    def clean_html(self, soup: Tag) -> str:
         trash_selectors = [
             "header", "footer", "nav", "aside", ".sidebar", ".comments",
             ".ads", ".social-share", "script", "style", "noscript", 
@@ -62,10 +64,10 @@ class ScrapeEBD:
         return f"ScrapeEBD(url={self._url})"
     
     @property
-    def url(self):
+    def url(self) -> str:
         return self._url
 
     @url.setter
-    def url(self, url):
+    def url(self, url: str) -> str:
         self._url = url
         return self._url

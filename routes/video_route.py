@@ -1,5 +1,4 @@
 from flask import Blueprint, jsonify
-from models.yt import YT
 from models.db import DB
 from concurrent.futures import ThreadPoolExecutor
 from workers.processing import background_process

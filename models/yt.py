@@ -3,6 +3,7 @@ from faster_whisper import WhisperModel
 from dtos.transcript_dtos import Transcript_DTOS
 from .db import DB
 import os
+from utils.logging_helper import log_error
 
 yt_opts = {
     "format": "bestaudio/best",
@@ -17,17 +18,17 @@ yt_opts = {
 }
 
 class YT:
-    _default_url = "https://www.youtube.com/watch?v="
-    _model = WhisperModel("small", device="cpu", compute_type="int8")
+    _default_url: str = "https://www.youtube.com/watch?v="
+    _model: WhisperModel = WhisperModel("small", device="cpu", compute_type="int8")
 
     def __init__(self, video_id: str):
-        self._video_id = video_id
-        self._url = f"{self._default_url}{video_id}"
+        self._video_id: str = video_id
+        self._url: str = f"{self._default_url}{video_id}"
         self._detected_language = None
         self._transcript = []
         self._process()
 
-    def _process(self):
+    def _process(self) -> None:
         current_opts = yt_opts.copy()
         current_opts["outtmpl"] = f"{self._video_id}.%(ext)s"
         db = DB().get_collection("transcripts")
@@ -56,16 +57,17 @@ class YT:
                 os.remove(file_path)
                 
         except Exception as e:
+            log_error(e)
             raise e
 
     @property
-    def transcript(self):
+    def transcript(self) -> list:
         return self._transcript
 
     @property
-    def detected_language(self):
+    def detected_language(self) -> (str | None):
         return self._detected_language
 
     @property
-    def video_id(self):
+    def video_id(self) -> str:
         return self._video_id
